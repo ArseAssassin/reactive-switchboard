@@ -68,7 +68,6 @@ kefir.Observable.prototype.set = (value) ->
   @map -> value
 
 kefir.Observable.prototype.extract = ->
-kefir.Observable.prototype.extract = ->
   @map (e) -> e.target.value
 
 kefir.Observable.prototype.wire = (self, fn) ->
@@ -113,12 +112,6 @@ signal = create: (value, reducers...) ->
 board = create: (fn) ->
   slots = {}
   o =
-    wire: (fn) ->
-      emitter = kefir.emitter()
-      emitter.slot = o.slot
-      fn.call emitter
-      emitter
-
     signal: (value, reducers...) ->
       signal.create value, reducers...
 
@@ -187,23 +180,13 @@ module.exports = create: (fn) ->
       initialState
 
     propsProperty: (names...) ->
-      if names.length == 1
-        @_propStream
-          .map (it) ->
-            it[names[0]]
-          .skipDuplicates()
-      else
-        @_propStream
-          .map (it) ->
-            names.map (name) -> it[name]
-          .skipDuplicates(_.isEqual)
+      @_propStream
+        .map (it) -> _.pick it, names
 
 
-    stateProperty: (name) ->
+    stateProperty: (names...) ->
       @_receiveState
-        .map (it) -> it[name]
-        .filter (it) -> it
-        .skipDuplicates()
+        .map (it) -> _.pick it, names
 
     componentWillReceiveProps: (nextProps) ->
       @_receiveProps.emit nextProps
@@ -235,14 +218,14 @@ module.exports = create: (fn) ->
     componentDidMount: ->
       @_blockers?.emit false
 
-    clearSignals: ->
+    clearWires: ->
       while @_wires.length
         @_wires.pop().end()
 
     componentWillUpdate: ->
       @_blockers?.emit true
       @_rerender.emit true
-      @clearSignals()
+      @clearWires()
 
     componentDidUpdate: ->
       @_blockers?.emit false
