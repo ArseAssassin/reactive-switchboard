@@ -1,0 +1,18 @@
+{
+  "name": "reactive-switchboard",
+  "version": "1.0.0",
+  "description": "Declarative state handling for React",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tuomas Kanerva",
+  "license": "MIT",
+  "peerDependencies": {
+    "kefir": "^3.1.0",
+    "lodash": "^3.10.1"
+  },
+  "dependencies": {
+    "route-parser": "0.0.4"
+  }
+}
