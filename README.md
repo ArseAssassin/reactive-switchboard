@@ -15,7 +15,7 @@ switchboard = require('reactive-switchboard').create ->
     signal: @signal(
       {} # we define the initial value
       
-      # we fold over kefir streams to mutate the initial value
+      # we fold over kefir streams to update the initial value
       kefir.fromPromise $.ajax '/api/session'
       .map (session) -> session.user
       
