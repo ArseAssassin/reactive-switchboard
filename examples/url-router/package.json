@@ -1,0 +1,54 @@
+{
+  "name": "heimo-superadmin",
+  "version": "1.0.0",
+  "description": "Heimo superadmin tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HeimoCommunity/heimo-superadmin.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HeimoCommunity/heimo-superadmin/issues"
+  },
+  "homepage": "https://github.com/HeimoCommunity/heimo-superadmin#readme",
+  "dependencies": {
+    "babelify": "^7.2.0",
+    "browserify": "^12.0.1",
+    "connect-modrewrite": "^0.8.2",
+    "del": "^2.0.2",
+    "gulp": "^3.9.0",
+    "gulp-autoprefixer": "^3.1.0",
+    "gulp-babel": "^6.1.1",
+    "gulp-combine-mq": "^0.4.0",
+    "gulp-connect": "^2.2.0",
+    "gulp-csso": "^1.0.1",
+    "gulp-if": "^2.0.0",
+    "gulp-imagemin": "^2.4.0",
+    "gulp-less": "^3.0.3",
+    "gulp-preprocess": "^1.2.0",
+    "gulp-replace": "^0.5.4",
+    "gulp-sequence": "^0.4.1",
+    "jquery": "^2.1.4",
+    "kefir": "^3.1.0",
+    "lodash": "^3.10.1",
+    "merge-stream": "^1.0.0",
+    "proxy-middleware": "^0.15.0",
+    "react": "^0.14.2",
+    "react-dom": "^0.14.2",
+    "reactive-switchboard": "^1.0.0",
+    "todomvc-app-css": "^2.0.3",
+    "url": "^0.11.0",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.6.0"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.10.0",
+    "coffeeify": "^1.1.0"
+  }
+}
