@@ -41,6 +41,11 @@ Auth = defineComponent
       null
 ```
 
+# Getting started
+
+* [Tutorial](https://medium.com/@ArseAssassin/creating-a-url-router-with-reactive-switchboard-c327538f4518)
+* [Introduction to reactive programming](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754)
+
 # Installation
 
 ```
