@@ -1,12 +1,10 @@
 {
-  "name": "heimo-superadmin",
-  "description": "Heimo superadmin tool",
+  "name": "reactive-switchboard-todomvc",
   "main": "index.js",
   "authors": [
     "Tuomas Kanerva <tuomas@kanerva.info>"
   ],
   "license": "ISC",
-  "homepage": "https://github.com/HeimoCommunity/heimo-superadmin",
   "moduleType": [],
   "private": true,
   "ignore": [

@@ -1,21 +1,12 @@
 {
-  "name": "heimo-superadmin",
+  "name": "reactive-switchboard-url-router-example",
   "version": "1.0.0",
-  "description": "Heimo superadmin tool",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/HeimoCommunity/heimo-superadmin.git"
-  },
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/HeimoCommunity/heimo-superadmin/issues"
-  },
-  "homepage": "https://github.com/HeimoCommunity/heimo-superadmin#readme",
   "dependencies": {
     "babelify": "^7.2.0",
     "browserify": "^12.0.1",
