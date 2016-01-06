@@ -14,11 +14,11 @@ switchboard = require('reactive-switchboard').create ->
     # signals are mutable values
     signal: @signal(
       {} # we define the initial value
-      
+
       # we fold over kefir streams to update the initial value
       kefir.fromPromise $.ajax '/api/session'
       .map (session) -> session.user
-      
+
       # a function is used to fold the new value over the old value
       (oldUser, newUser) ->
         newUser
@@ -26,20 +26,20 @@ switchboard = require('reactive-switchboard').create ->
 
 Auth = defineComponent
   # created switchboard exposes a mixin to access its values
-  mixins: [switchboard.mixin] 
-  
+  mixins: [switchboard.mixin]
+
   # wireState declaration replaces imperative setState calls
   wireState: ->
     # state is declared using signals
     user: @board.currentUser.signal
-    
+
   render: ->
     # state is used to access signal values
     if @state.user._id
       @props.children
     else
       null
-``` 
+```
 
 # Installation
 
@@ -69,7 +69,7 @@ This is a list of public API methods and properties that reactive-switchboard ex
 
 ```component.slot(name)``` see ```switchboard```
 
-```component.wire(fn)``` returns a function that is used to push values to a new Kefir stream. ```fn``` is called with a newly created Kefir stream bound to ```this```. The stream can then be merged to a slot to update the value of a signal every time the returned function is called.
+```component.wire(fn)``` returns a function that is used to push values to a new Kefir stream. ```fn``` is called with a newly created Kefir stream bound as the first argument. The stream can then be merged to a slot to update the value of a signal every time the returned function is called.
 
 ```component.propsProperty(name, [name, ...])``` returns a stream of property updates, filtering out any keys that aren't passed as an argument. Should be used over ```this.props``` when defining signals.
 

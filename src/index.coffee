@@ -70,15 +70,7 @@ kefir.Observable.prototype.set = (value) ->
 kefir.Observable.prototype.extract = ->
   @map (e) -> e.target.value
 
-kefir.Observable.prototype.wire = (self, fn) ->
-  if fn
-    @state = self.state
-    @props = self.props
-    @slot = self.slot
-    @board = self.board
-    fn.call @
-  else
-    self.call @
+kefir.Observable.prototype.wire = (fn) -> fn @
 
 kefir.Observable.prototype.to = (slots...) ->
   for slot in slots
@@ -117,6 +109,11 @@ board = create: (fn) ->
 
     slot: (name) ->
       slots[name] ||= kefir.emitter()
+
+    consume: (consumers) ->
+      for name, fn of consumers
+        do (name, fn) ->
+          o.slot(name).onValue (it) -> fn it
 
   fn?.call o
   o
@@ -171,9 +168,9 @@ module.exports = create: (fn) ->
           _.assign {}, state, "#{name}": value
         , {}
         .skipDuplicates(_.isEqual)
-        .wire ->
-          @to self._receiveState
-          @holdLatestWhile blocked
+        .wire (stream) ->
+          stream.to self._receiveState
+          stream.holdLatestWhile blocked
           .onValue (state) ->
             self.setState state
 
@@ -198,7 +195,7 @@ module.exports = create: (fn) ->
       if !fn
         throw new Error "wire takes function as argument, received #{fn?.toString()}"
       @_wires.push wire = kefir.emitter()
-      wire.wire @, fn
+      wire.wire fn
 
       wire.emit
 

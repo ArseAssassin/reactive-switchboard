@@ -1,0 +1,22 @@
+{
+  "name": "heimo-superadmin",
+  "description": "Heimo superadmin tool",
+  "main": "index.js",
+  "authors": [
+    "Tuomas Kanerva <tuomas@kanerva.info>"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/HeimoCommunity/heimo-superadmin",
+  "moduleType": [],
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.5"
+  }
+}

@@ -14,5 +14,14 @@
   },
   "dependencies": {
     "route-parser": "0.0.4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArseAssassin/reactive-switchboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ArseAssassin/reactive-switchboard/issues"
+  },
+  "homepage": "https://github.com/ArseAssassin/reactive-switchboard#readme"
+
 }
