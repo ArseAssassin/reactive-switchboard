@@ -1,5 +1,6 @@
 kefir = require 'kefir'
 _ = require 'lodash'
+React = require 'react'
 
 snd = (a, b) -> b
 
@@ -117,18 +118,18 @@ board = create: (fn) ->
         do (name, fn) ->
           o.slot(name).onValue (it) -> fn it
 
-    end: () => 
+    end: () =>
       for name, slot of slots
         slot.end()
 
   [o, fn? o]
 
 
-module.exports = 
-  create: (fn) => 
+module.exports =
+  create: (fn) =>
     board.create(fn)[1]
 
-  component: (wireState, component) => 
+  component: (wireState, component) =>
     React.createClass
       getInitialState: ->
         @_wires = []
@@ -143,7 +144,7 @@ module.exports =
 
         @ctrl = board.create()[0]
 
-        @ctrl.propsProperty = (names...) => 
+        @ctrl.propsProperty = (names...) =>
           @_propStream
             .map (it) -> _.pick it, names
 
@@ -154,13 +155,13 @@ module.exports =
         @ctrl.isAlive = @isAlive
 
         oldSignal = @ctrl.signal
-        @ctrl.signal = (value, reducers...) => 
+        @ctrl.signal = (value, reducers...) =>
           oldSignal(value, reducers...).takeUntilBy @dead
 
 
         streams = []
         initialState = {}
-        for k, stream of wireState(@ctrl)
+        for k, stream of wireState?(@ctrl)
           do (k, stream) ->
             stream.take(1).onValue (it) ->
               initialState[k] = it
@@ -190,7 +191,7 @@ module.exports =
 
       componentWillReceiveProps: (nextProps) ->
         @_receiveProps.emit nextProps
-      
+
       componentWillUnmount: ->
         @_alive.emit false
         @_blockers?.end()
@@ -213,7 +214,7 @@ module.exports =
           throw new Error "wire takes function as argument, received #{fn?.toString()}"
 
         wire = undefined
-        invocation = (args...) => 
+        invocation = (args...) =>
           if !wire
             @_wires.push wire = kefir.emitter()
             wire.wire fn
