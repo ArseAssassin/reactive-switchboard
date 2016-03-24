@@ -4,4 +4,4 @@ global.kefir = require('kefir')
 global.dom = require('react').DOM
 global.React = require('react')
 
-global.todos = require('./todos')
+global.model = require('./todos')

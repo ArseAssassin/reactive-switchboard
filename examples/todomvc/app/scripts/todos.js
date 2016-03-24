@@ -16,8 +16,8 @@ module.exports = require('reactive-switchboard').create(function(ctrl) {
         todos,
 
         ctrl.slot('todos.add')
-        .map((it) => it.trim())
-        .filter((it) => it != ''),
+            .map((it) => it.trim())
+            .filter((it) => it != ''),
         (oldTodos, newTodo) => [createTodo(newTodo)].concat(oldTodos),
 
         ctrl.slot('todos.update'),

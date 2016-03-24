@@ -19,35 +19,35 @@ module.exports = board.component(
     const {editing, updatedTodo} = wiredState,
           stopEdit = (stream) =>
             stream
-            .map((it) => _.merge({}, todo, {title: updatedTodo}))
-            .to(todos.todos.update, slot('editing.stop'))
+              .map((it) => _.merge({}, todo, {title: updatedTodo}))
+              .to(model.todos.update, slot('editing.stop'))
 
     return <li
       className={todo.completed && 'completed' || editing && 'editing' || ''}
       onDoubleClick={wire((stream) =>
         stream
-        .filter(() => !todo.completed)
-        .to(slot('editing.start'))
-      )}
-      >
+          .filter(() => !todo.completed)
+          .to(slot('editing.start'))
+      )}>
+
       <div className="view">
         <input
           className="toggle"
           type="checkbox"
           checked={todo.completed}
           onChange={wire((stream) =>
-            stream.set(
-              _.merge({}, todo, {completed: !todo.completed})
-            ).to(todos.todos.update)
+            stream
+              .set(_.merge({}, todo, {completed: !todo.completed}))
+              .to(model.todos.update)
           )}/>
 
         <label>{todo.title}</label>
         <button
           className="destroy"
-          onClick={wire((stream) =>
-            stream.set(todo).to(todos.todos.remove)
-          )}/>
+          onClick={wire((stream) => stream.set(todo).to(model.todos.remove))}/>
+
       </div>
+
       {!editing ? undefined :
         <input
           className="edit"
@@ -55,11 +55,12 @@ module.exports = board.component(
           autoFocus
           onKeyDown={wire((stream) =>
             stream
-            .filter((event) => event.keyCode == KEY_ENTER)
-            .wire(stopEdit)
+              .filter((event) => event.keyCode == KEY_ENTER)
+              .wire(stopEdit)
           )}
           onBlur={wire(stopEdit)}
           onChange={wire((stream) => stream.extract().to(slot('todo.update')))}/>}
+
     </li>
   }
 );

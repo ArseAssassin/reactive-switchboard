@@ -2,7 +2,7 @@ const board = require('reactive-switchboard');
 
 module.exports = board.component(
   () => ({
-    todos: todos.todos.signal
+    todos: model.todos.signal
   }),
   ({wiredState, wire, selectedMode}) => {
     const {todos} = wiredState,
@@ -16,8 +16,9 @@ module.exports = board.component(
           </li>
 
     return <footer className="footer">
-      <span className="todo-count"><strong>{left}</strong> item{left != 1 && 's'} left</span>
-
+      <span className="todo-count">
+        <strong>{left}</strong> item{left != 1 && 's'} left
+      </span>
 
       <ul className="filters">
         {makeFilter('All',        'all',       '#/')}
@@ -26,10 +27,13 @@ module.exports = board.component(
       </ul>
 
       {left == todos.length ? undefined :
-        <button className="clear-completed"
-          onClick={wire((stream) => {
-            stream.to(todos.todos.clear)
-          })}>Clear completed</button>
+        <button
+          className="clear-completed"
+          onClick={wire((stream) => stream.to(model.todos.clear))}>
+
+          Clear completed
+
+        </button>
       }
     </footer>
 

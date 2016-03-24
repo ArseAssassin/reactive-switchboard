@@ -7,8 +7,8 @@ const board = require('reactive-switchboard'),
 
 module.exports = board.component(
   (ctrl) => ({
-    todos: todos.todos.signal,
-    mode:  todos.mode.signal
+    todos: model.todos.signal,
+    mode:  model.mode.signal
   }),
   ({ wiredState, wire }) => {
     const {todos, mode} = wiredState,
@@ -30,8 +30,9 @@ module.exports = board.component(
             checked={allChecked}
             autoFocus
             onChange={wire((stream) => {
-              stream.map((event) => event.target.checked)
-              .to(todos.toggleAll)
+              stream
+                .map((event) => event.target.checked)
+                .to(model.todos.toggleAll)
             })}/>
 
           <ul className="todo-list">

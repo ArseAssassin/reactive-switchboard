@@ -18,12 +18,12 @@ module.exports = board.component(
         className="new-todo"
         placeholder="What needs to be done?"
         value={newTodo}
-        onKeyDown={wire((stream) => {
+        onKeyDown={wire((stream) =>
           stream
-          .filter((event) => event.keyCode == KEY_ENTER)
-          .set(newTodo)
-          .to(slot('todo.add'), todos.todos.add)
-        })}
+            .filter((event) => event.keyCode == KEY_ENTER)
+            .set(newTodo)
+            .to(slot('todo.add'), model.todos.add)
+        )}
         onChange={wire((stream) => stream.extract().to(slot('todo.update')))}
         autofocus/>
     </header>
