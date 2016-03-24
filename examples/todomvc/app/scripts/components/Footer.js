@@ -1,14 +1,12 @@
-module.exports = React.createClass({
-  mixins: [todos.mixin],
-  wireState: function() {
-    return {
-      todos: this.board.todos.signal
-    }
-  },
-  render: function() {
-    const {todos} = this.state,
+const board = require('reactive-switchboard');
+
+module.exports = board.component(
+  () => ({
+    todos: todos.todos.signal
+  }),
+  ({wiredState, wire, selectedMode}) => {
+    const {todos} = wiredState,
           left = todos.filter((it) => !it.completed).length,
-          {selectedMode} = this.props,
           makeFilter = (label, mode, href) => <li>
             <a
               className={selectedMode == href && 'selected'}
@@ -29,11 +27,11 @@ module.exports = React.createClass({
 
       {left == todos.length ? undefined :
         <button className="clear-completed"
-          onClick={this.wire((stream) => {
-            stream.to(this.board.todos.clear)
+          onClick={wire((stream) => {
+            stream.to(todos.todos.clear)
           })}>Clear completed</button>
       }
     </footer>
 
   }
-})
+)

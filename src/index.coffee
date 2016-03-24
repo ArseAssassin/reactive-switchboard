@@ -74,6 +74,8 @@ kefir.Observable.prototype.wire = (fn) -> fn @
 
 kefir.Observable.prototype.to = (slots...) ->
   for slot in slots
+    if !slot
+      throw new Error "to received invalid slot #{slot}"
     if !slot.emit
       throw new Error "Expected slot to be an emitter, received #{slot?.toString()}"
   @onValue (it) ->
@@ -115,114 +117,116 @@ board = create: (fn) ->
         do (name, fn) ->
           o.slot(name).onValue (it) -> fn it
 
-  fn?.call o
-  o
+    end: () => 
+      for name, slot of slots
+        slot.end()
+
+  [o, fn? o]
 
 
-module.exports = create: (fn) ->
-  board = board.create(fn)
+module.exports = 
+  create: (fn) => 
+    board.create(fn)[1]
 
-  board: board
-  mixin:
-    getInitialState: ->
-      @board = board
+  component: (wireState, component) => 
+    React.createClass
+      getInitialState: ->
+        @_wires = []
 
-      @_alive = kefir.emitter()
-      @_rerender = kefir.emitter()
-      @_receiveProps = kefir.emitter()
-      @_receiveState = kefir.emitter()
-      @_wires = []
+        @_alive = kefir.emitter()
+        @_receiveProps = kefir.emitter()
+        @_receiveState = kefir.emitter()
+        @isAlive = @_alive.scan snd, true
+        @dead = @isAlive.filter (it) -> it == false
+        @_propStream = @_receiveProps
+                        .scan snd, @props
 
-      @isAlive = @_alive.scan snd, true
-      @dead = @isAlive.filter (it) -> it == false
-      @_propStream = @_receiveProps
-      .scan snd, @props
+        @ctrl = board.create()[0]
 
-      @slots = {}
+        @ctrl.propsProperty = (names...) => 
+          @_propStream
+            .map (it) -> _.pick it, names
 
-      self = @
+        @ctrl.stateProperty = (names...) ->
+          @_receiveState
+            .map (it) -> _.pick it, names
 
-      streams = []
+        @ctrl.isAlive = @isAlive
 
-      initialState = {}
-
-      @wiring = true
-      for k, stream of @wireState?()
-        @wiring = false
-        do (k, stream) ->
-          stream.take(1).onValue (it) ->
-            initialState[k] = it
-
-          streams.push stream.skip(1).map (it) ->
-            [k, it]
-
-      if streams.length
-        @_blockers = kefir.emitter()
-        blocked = @_blockers.scan snd, true
-        .skipDuplicates()
-
-        @updates = kefir.merge(streams)
-        .takeUntilBy @dead
-        .skipDuplicates(_.isEqual)
-        .scan (state, [name, value]) ->
-          _.assign {}, state, "#{name}": value
-        , {}
-        .skipDuplicates(_.isEqual)
-        .wire (stream) ->
-          stream.to self._receiveState
-          stream.holdLatestWhile blocked
-          .onValue (state) ->
-            self.setState state
-
-      initialState
-
-    propsProperty: (names...) ->
-      @_propStream
-        .map (it) -> _.pick it, names
+        oldSignal = @ctrl.signal
+        @ctrl.signal = (value, reducers...) => 
+          oldSignal(value, reducers...).takeUntilBy @dead
 
 
-    stateProperty: (names...) ->
-      @_receiveState
-        .map (it) -> _.pick it, names
+        streams = []
+        initialState = {}
+        for k, stream of wireState(@ctrl)
+          do (k, stream) ->
+            stream.take(1).onValue (it) ->
+              initialState[k] = it
 
-    componentWillReceiveProps: (nextProps) ->
-      @_receiveProps.emit nextProps
+            streams.push stream.skip(1).map (it) ->
+              [k, it]
 
-    signal: (value, reducers...) ->
-      signal.create(value, reducers...).takeUntilBy @dead
+        if streams.length
+          @_blockers = kefir.emitter()
+          blocked = @_blockers.scan snd, true
+          .skipDuplicates()
 
-    wire: (fn) ->
-      if !fn
-        throw new Error "wire takes function as argument, received #{fn?.toString()}"
-      @_wires.push wire = kefir.emitter()
-      wire.wire fn
+          @updates = kefir.merge(streams)
+            .takeUntilBy @dead
+            .skipDuplicates(_.isEqual)
+            .scan (state, [name, value]) ->
+              _.assign {}, state, "#{name}": value
+            , {}
+            .skipDuplicates(_.isEqual)
+            .wire (stream) =>
+              stream.to @_receiveState
+              stream.holdLatestWhile blocked
+              .onValue (state) =>
+                @setState state
 
-      wire.emit
+        initialState
 
-    slot: (name) ->
-      @slots[name] ||= kefir.emitter()
+      componentWillReceiveProps: (nextProps) ->
+        @_receiveProps.emit nextProps
+      
+      componentWillUnmount: ->
+        @_alive.emit false
+        @_blockers?.end()
+        @_alive.end()
+        @_receiveProps.end()
+        @ctrl.end()
 
-    componentWillUnmount: ->
-      @_alive.emit false
-      @_blockers?.end()
-      @_alive.end()
-      @_rerender.end()
-      @_receiveProps.end()
+      componentDidMount: ->
+        @_blockers?.emit false
 
-      for k, v of @slots
-        v.end()
+      componentWillUpdate: ->
+        @_blockers?.emit true
+        # @clearWires()
 
-    componentDidMount: ->
-      @_blockers?.emit false
+      componentDidUpdate: ->
+        @_blockers?.emit false
 
-    clearWires: ->
-      while @_wires.length
-        @_wires.pop().end()
+      wire: (fn) ->
+        if !fn
+          throw new Error "wire takes function as argument, received #{fn?.toString()}"
 
-    componentWillUpdate: ->
-      @_blockers?.emit true
-      @_rerender.emit true
-      @clearWires()
+        wire = undefined
+        invocation = (args...) => 
+          if !wire
+            @_wires.push wire = kefir.emitter()
+            wire.wire fn
 
-    componentDidUpdate: ->
-      @_blockers?.emit false
+          wire.emit args...
+
+        invocation
+
+      clearWires: ->
+        while @_wires.length
+          @_wires.pop().end()
+
+      render: ->
+        React.createElement component,
+          _.merge {wire: @wire, wiredState: @state, slot: @ctrl.slot}, @props
+

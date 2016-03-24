@@ -1,19 +1,17 @@
-const Header = require('./Header'),
+const board = require('reactive-switchboard'),
+      Header = require('./Header'),
       Todo = require('./Todo'),
       Footer = require('./Footer')
       ;
 
 
-module.exports = React.createClass({
-  mixins: [todos.mixin],
-  wireState: function() {
-    return {
-      todos:        this.board.todos.signal,
-      mode:         this.board.mode.signal
-    }
-  },
-  render: function() {
-    const {todos, mode} = this.state,
+module.exports = board.component(
+  (ctrl) => ({
+    todos: todos.todos.signal,
+    mode:  todos.mode.signal
+  }),
+  ({ wiredState, wire }) => {
+    const {todos, mode} = wiredState,
           filteredTodos = todos.filter((it) =>
             mode == '#/'                           ||
             mode == '#/active'    && !it.completed ||
@@ -31,9 +29,9 @@ module.exports = React.createClass({
             type="checkbox"
             checked={allChecked}
             autoFocus
-            onChange={this.wire((stream) => {
+            onChange={wire((stream) => {
               stream.map((event) => event.target.checked)
-              .to(this.board.todos.toggleAll)
+              .to(todos.toggleAll)
             })}/>
 
           <ul className="todo-list">
@@ -46,6 +44,6 @@ module.exports = React.createClass({
       {todos.length == 0 ? undefined : <Footer selectedMode={mode} />}
     </section>
   }
-})
+)
 
 

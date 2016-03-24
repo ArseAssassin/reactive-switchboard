@@ -1,17 +1,16 @@
+var board = require('reactive-switchboard');
+
 const KEY_ENTER = 13;
 
-module.exports = React.createClass({
-  mixins: [todos.mixin],
-  wireState: function() {
-    return {
-      newTodo: this.signal('',
-        this.slot('todo.update'),
-        this.slot('todo.add').set('')
-      )
-    }
-  },
-  render: function() {
-    const {newTodo} = this.state;
+module.exports = board.component(
+  (ctrl) => ({
+    newTodo: ctrl.signal('',
+      ctrl.slot('todo.update'),
+      ctrl.slot('todo.add').set('')
+    )
+  }),
+  ({ wire, slot, wiredState }) => {
+    const {newTodo} = wiredState;
 
     return <header className="header">
       <h1>todos</h1>
@@ -19,14 +18,14 @@ module.exports = React.createClass({
         className="new-todo"
         placeholder="What needs to be done?"
         value={newTodo}
-        onKeyDown={this.wire((stream) => {
+        onKeyDown={wire((stream) => {
           stream
           .filter((event) => event.keyCode == KEY_ENTER)
           .set(newTodo)
-          .to(this.slot('todo.add'), this.board.todos.add)
+          .to(slot('todo.add'), todos.todos.add)
         })}
-        onChange={this.wire((stream) => stream.extract().to(this.slot('todo.update')))}
+        onChange={wire((stream) => stream.extract().to(slot('todo.update')))}
         autofocus/>
     </header>
   }
-})
+)
