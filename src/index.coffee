@@ -130,7 +130,11 @@ module.exports =
     board.create(fn)[1]
 
   component: (wireState, component) =>
+    if !component
+      component = wireState
+      wireState = undefined
     React.createClass
+      displayName: component.displayName || component.name
       getInitialState: ->
         @_wires = []
 
@@ -144,13 +148,8 @@ module.exports =
 
         @ctrl = board.create()[0]
 
-        @ctrl.propsProperty = (names...) =>
-          @_propStream
-            .map (it) -> _.pick it, names
-
-        @ctrl.stateProperty = (names...) ->
-          @_receiveState
-            .map (it) -> _.pick it, names
+        @ctrl.propsProperty = @_propStream
+        @ctrl.stateProperty = @_receiveState
 
         @ctrl.isAlive = @isAlive
 
@@ -181,11 +180,12 @@ module.exports =
               _.assign {}, state, "#{name}": value
             , {}
             .skipDuplicates(_.isEqual)
-            .wire (stream) =>
-              stream.to @_receiveState
-              stream.holdLatestWhile blocked
-              .onValue (state) =>
-                @setState state
+            .holdLatestWhile blocked
+            .onValue (state) =>
+              @_receiveState.emit(_.assign({}, this.state, state))
+              @setState state
+
+        @_receiveState.emit(initialState)
 
         initialState
 
@@ -204,7 +204,7 @@ module.exports =
 
       componentWillUpdate: ->
         @_blockers?.emit true
-        # @clearWires()
+        @clearWires()
 
       componentDidUpdate: ->
         @_blockers?.emit false

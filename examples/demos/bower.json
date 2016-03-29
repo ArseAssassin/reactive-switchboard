@@ -1,0 +1,20 @@
+{
+  "name": "reactive-switchboard-todomvc",
+  "main": "index.js",
+  "authors": [
+    "Tuomas Kanerva <tuomas@kanerva.info>"
+  ],
+  "license": "ISC",
+  "moduleType": [],
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.5"
+  }
+}
