@@ -15,6 +15,7 @@ module.exports = board.component(
         results: signal(
             {loading: true, items: [], error: undefined},
 
+            // when new state is wired
             stateProperty
             .filter((it) => it.query.length > 2)
             .skipDuplicates((a, b) => a.query === b.query && a.type === b.type)
@@ -48,8 +49,7 @@ module.exports = board.component(
                         <a
                             href={'#' + tab}
                             onClick={wire((it) =>
-                                it
-                                .cancel()
+                                it.cancel() // cancel event to stop navigation
                                 .set(tab.toLowerCase())
                                 .to(slot('type.update'))
                             )}>

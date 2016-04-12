@@ -1,3 +1,5 @@
+var fs = require('fs')
+
 var board = require('reactive-switchboard');
 
 var RestDemo = require('./demos/RestDemo');
@@ -6,14 +8,31 @@ var Timer = require('./demos/Timer');
 var StringTransformer = require('./demos/StringTransformer');
 var FirebaseDemo = require('./demos/FirebaseDemo');
 var MouseTracker = require('./demos/MouseTracker')
+var FormValidation = require('./demos/FormValidation')
+
+var Code = require('./Code')
 
 var makeDemo = (url, title, component, description) => ({
-    url, title, component, description
+    url, title, component, description,
+    source: sources[url]
 })
+
+var sources = {
+    '/basic': fs.readFileSync(__dirname + '/demos/BasicDemo.js', 'utf-8'),
+    '/form-validation': fs.readFileSync(__dirname + '/demos/FormValidation.js', 'utf-8'),
+    '/string': fs.readFileSync(__dirname + '/demos/StringTransformer.js', 'utf-8'),
+    '/mouse': fs.readFileSync(__dirname + '/demos/MouseTracker.js', 'utf-8'),
+    '/timer': fs.readFileSync(__dirname + '/demos/Timer.js', 'utf-8'),
+    '/rest': fs.readFileSync(__dirname + '/demos/RestDemo.js', 'utf-8'),
+    '/firebase': fs.readFileSync(__dirname + '/demos/FirebaseDemo.js', 'utf-8'),
+}
 
 var demos = [
     makeDemo('/basic', 'Basic signal handling', <BasicDemo />, <p>
         This demonstrates the basics of reactive-switchboard by creating a simple counter that can be incremented and decremented using streams. We define a single component with a signal and use the slots <code>inc</code> and <code>dec</code> to change its value.
+        </p>),
+    makeDemo('/form-validation', 'Form validation', <FormValidation />, <p>
+        This demonstrates working with time using Kefir streams. Form validation is debounced for 500ms to allow user to stop typing before errors are updated.
         </p>),
     makeDemo('/string', 'String transformer', <StringTransformer/>, <p>
         This demonstrates how to pass data between components without using props. <code>string</code> is defined in an external model that can be used to wire state to any component.
@@ -70,7 +89,7 @@ var Route = board.component(
 )
 
 
-module.exports = () => <div className="container" style={{maxWidth: '600px'}}>
+module.exports = () => <div className="container" style={{maxWidth: '1024px'}}>
     <div className="panel panel-default">
         <div className="panel-heading">
             <h1><Link href="/">Reactive Switchboard Examples</Link></h1>
@@ -88,11 +107,12 @@ module.exports = () => <div className="container" style={{maxWidth: '600px'}}>
             <Route href="/">
                 <p>This is a collection of examples for reactive-switchboard.</p>
             </Route>
-            {demos.map(({url, title, component, description}) =>
+            {demos.map(({url, title, component, description, source}) =>
                 <Route key={url} href={url}>
                     <h4 key="title">{title}</h4>
                     <div key="description">{description}</div>
                     <div key="demo">{component}</div>
+                    <Code source={source} />
                 </Route>
             )}
 

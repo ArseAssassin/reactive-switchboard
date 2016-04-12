@@ -15,11 +15,14 @@ browserify = require 'browserify'
 watchify = require 'watchify'
 babelify = require 'babelify'
 
+include = require 'gulp-include'
+
 bundler = browserify _.merge watchify.args,
   entries: 'app/scripts/index.js'
   extensions: ['.js']
   debug: true
 .transform babelify
+.transform require 'brfs'
 
 
 sources =

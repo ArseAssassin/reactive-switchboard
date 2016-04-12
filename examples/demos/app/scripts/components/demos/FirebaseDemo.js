@@ -21,6 +21,7 @@ module.exports = board.component(
             <form onSubmit={(e) => {
                 e.preventDefault()
                 if (nameSet) {
+                    // values can be emitted by slots when working with imperative APIs
                     slot('message.update').emit('')
                     myDataRef.push({ date: new Date().toUTCString(), name, message })
                 } else if (name) {

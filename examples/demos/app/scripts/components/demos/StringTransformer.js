@@ -1,5 +1,6 @@
 var board = require('reactive-switchboard')
 
+// create a switchboard with signals that can be shared by components
 var model = board.create(({ slot, signal }) => ({
     string: {
         signal: signal('Hello world!', slot('string.update')),

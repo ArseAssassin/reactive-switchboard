@@ -4,8 +4,11 @@ module.exports = board.component(
     ({ slot, signal, stateProperty }) => ({
         interval: signal(
             1000,
+
             slot('interval.update')
+            // parse as number
             .map(Number)
+            // filter out NaN
             .filter(isFinite)
         )
     }),
@@ -27,10 +30,16 @@ module.exports = board.component(
 var Timer = board.component(
     ({ slot, signal, propsProperty }) => ({
         value: signal(0,
+
+            // when receiving new props
             propsProperty
+            // get interval
             .map((it) => it.interval)
+            // make sure it's > 100ms
             .filter((it) => it >= 100)
+            // create a new timer to increment counter
             .flatMapLatest((interval) => kefir.withInterval(interval, (it) => it.emit())),
+
             (it) => it + 1
         )
     }),
