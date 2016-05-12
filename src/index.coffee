@@ -231,3 +231,7 @@ module.exports =
         React.createElement component,
           _.merge {wire: @wire, wiredState: @state, slot: @ctrl.slot}, @props
 
+  combine: (fns...) => (ctrl) =>
+    _.assign (fns.map (it) => it ctrl)...
+
+
