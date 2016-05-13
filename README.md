@@ -46,7 +46,7 @@ module.exports = board.component(
 # Installation
 
 ```
-npm install --save reactive-switchboard kefir lodash
+npm install --save -E reactive-switchboard kefir
 ```
 
 # Getting started

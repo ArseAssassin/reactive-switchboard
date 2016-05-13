@@ -9,16 +9,16 @@ var model = board.create(({ slot, signal }) => ({
 }))
 
 module.exports = function StringDemo() {
-    return <div>
+    return model.inject(<div>
         <Form />
         <StringTransformer fn={(it) => it} />
         <StringTransformer fn={(it) => it.toUpperCase()} />
         <StringTransformer fn={(it) => it.toLowerCase()} />
-    </div>
+    </div>)
 }
 
 var Form = board.component(
-    () => ({string: model.string.signal}),
+    ({ switchboard }) => ({string: switchboard.string.signal}),
     function Form({ wire, wiredState }) {
         return <label>
             <input
@@ -32,7 +32,7 @@ var Form = board.component(
 )
 
 var StringTransformer = board.component(
-    () => ({string: model.string.signal.filter(Boolean)}),
+    ({ switchboard }) => ({string: switchboard.string.signal.filter(Boolean)}),
     function StringTransformer({ wiredState, fn }) {
         return <div>{fn(wiredState.string)}</div>
     }

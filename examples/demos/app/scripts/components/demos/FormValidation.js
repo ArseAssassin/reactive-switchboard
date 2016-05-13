@@ -27,7 +27,7 @@ module.exports = board.component(
             })
         ),
     }),
-    function BasicDemo({ wiredState: { date, errors }, wire, slot }) {
+    function FormValidation({ wiredState: { date, errors }, wire, slot }) {
         return <div>
             <p>
                 <input
@@ -38,7 +38,7 @@ module.exports = board.component(
                     onChange={wire((it) => it.extract().to(slot('date.update')))} />
             </p>
 
-            { errors.map((it) => <p className="text-danger">{it}</p>) }
+            { errors.map((it, idx) => <p key={ idx } className="text-danger">{it}</p>) }
 
             <p>
                 <button

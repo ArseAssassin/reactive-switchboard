@@ -73,12 +73,12 @@ var model = board.create(({ signal, slot }) => ({
 }));
 
 var Link = board.component(
-    function Link({ href, children, wire }) {
+    function Link({ href, children, wire, switchboard }) {
         return <a href={`#${href}`}
             onClick={wire((it) =>
                 it.cancel()
                 .set(href)
-                .to(model.updateUrl)
+                .to(switchboard.updateUrl)
             )}
             >
             {children}
@@ -87,7 +87,7 @@ var Link = board.component(
 )
 
 var Route = board.component(
-    () => ({path: model.url}),
+    ({ switchboard }) => ({path: switchboard.url}),
     function Route({ href, children, wiredState }) {
         return <div>
             {wiredState.path === '#' + href ? children : null}
@@ -96,7 +96,7 @@ var Route = board.component(
 )
 
 
-module.exports = () => <div className="container" style={{maxWidth: '1024px'}}>
+module.exports = () => model.inject(<div className="container" style={{maxWidth: '1024px'}}>
     <div className="panel panel-default">
         <div className="panel-heading">
             <h1><Link href="/">Reactive Switchboard Examples</Link></h1>
@@ -125,4 +125,4 @@ module.exports = () => <div className="container" style={{maxWidth: '1024px'}}>
 
         </div>
     </div>
-</div>
+</div>)

@@ -1,5 +1,5 @@
 kefir = require 'kefir'
-_ = require 'lodash'
+r = require 'ramda'
 React = require 'react'
 
 snd = (a, b) -> b
@@ -142,6 +142,27 @@ module.exports =
 
         render: () => element
 
+    validate = (signals, fn) =>
+      r.pipe(
+        r.map((it) => r.zip(r.values(it.values), r.values(it.signals)))
+        r.unnest()
+        r.filter(([value]) => !fn(value))
+        r.map((it) => it[1].skip(1).take(1))
+      )(signals)
+
+    b.validateSignals = (component, validator, cb) =>
+      { renderToString } = require 'react-dom/server'
+      wiredStates = []
+      result = renderToString(b.inject(component, wiredStates))
+      invalidSignals = validate(wiredStates, validator)
+
+      [wiredStates...].forEach((it) => it.component.end())
+
+      if (invalidSignals.length)
+        kefir.zip(invalidSignals).take(1).onValue(() => b.validateSignals(component, validator, cb))
+      else
+        cb(result)
+
     b
 
   component: (wireState, component) =>
@@ -172,6 +193,7 @@ module.exports =
         @ctrl.stateProperty = @_receiveState
 
         @ctrl.isAlive = @isAlive
+        @ctrl.switchboard = @context.switchboard
 
         oldSignal = @ctrl.signal
         @ctrl.signal = (value, reducers...) =>
@@ -197,14 +219,14 @@ module.exports =
 
           @updates = kefir.merge(streams)
             .takeUntilBy @dead
-            .skipDuplicates(_.isEqual)
+            .skipDuplicates(r.equals)
             .scan (state, [name, value]) ->
-              _.assign {}, state, "#{name}": value
+              r.merge state, "#{name}": value
             , {}
-            .skipDuplicates(_.isEqual)
+            .skipDuplicates(r.equals)
             .holdLatestWhile blocked
             .onValue (state) =>
-              @_receiveState.emit(_.assign({}, this.state, state))
+              @_receiveState.emit(r.merge(this.state, state))
               @setState state
 
         @_receiveState.emit(initialState)
@@ -213,6 +235,7 @@ module.exports =
           @savedWiredState =
             signals: wiredState
             values: initialState
+            component: @
 
           @context.wiredStates.push @savedWiredState
 
@@ -222,6 +245,9 @@ module.exports =
         @_receiveProps.emit nextProps
 
       componentWillUnmount: ->
+        @end()
+
+      end: ->
         @_alive.emit false
         @_blockers?.end()
         @_alive.end()
@@ -230,6 +256,8 @@ module.exports =
 
         if @context.wiredStates
           @context.wiredStates.splice @context.wiredStates.indexOf(@savedWiredState), 1
+          delete @savedWiredState
+
 
       componentDidMount: ->
         @_blockers?.emit false
@@ -261,9 +289,9 @@ module.exports =
 
       render: ->
         React.createElement component,
-          _.merge {wire: @wire, wiredState: @state, slot: @ctrl.slot}, @props
+          r.merge {wire: @wire, wiredState: @state, slot: @ctrl.slot, switchboard: @context.switchboard}, @props
 
   combine: (fns...) => (ctrl) =>
-    _.assign (fns.map (it) => it ctrl)...
+    r.merge (fns.map (it) => it ctrl)...
 
 
