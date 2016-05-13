@@ -117,7 +117,6 @@ gulp.task 'less:build', ->
 
   gulp.src sources.styles + '/style.less'
     .pipe less paths: [sources.styles + '**/*']
-    .pipe require('gulp-debug')()
     .on 'error', (err) ->
       console.error err
       @emit 'end'

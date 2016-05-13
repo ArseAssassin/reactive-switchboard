@@ -127,7 +127,22 @@ board = create: (fn) ->
 
 module.exports =
   create: (fn) =>
-    board.create(fn)[1]
+    b = board.create(fn)[1]
+    b.inject = (element, wiredStates) =>
+      React.createElement React.createClass
+        displayName: 'ReactiveSwitchboardInjector'
+
+        childContextTypes:
+          switchboard: React.PropTypes.object
+          wiredStates: React.PropTypes.array
+
+        getChildContext: () =>
+          switchboard: b
+          wiredStates: wiredStates
+
+        render: () => element
+
+    b
 
   component: (wireState, component) =>
     if !component
@@ -135,6 +150,11 @@ module.exports =
       wireState = undefined
     React.createClass
       displayName: component.displayName || component.name
+
+      contextTypes:
+        switchboard: React.PropTypes.object
+        wiredStates: React.PropTypes.array
+
       getInitialState: ->
         @_wires = []
 
@@ -160,7 +180,9 @@ module.exports =
 
         streams = []
         initialState = {}
-        for k, stream of wireState?(@ctrl)
+        wiredState = wireState?(@ctrl)
+
+        for k, stream of wiredState
           do (k, stream) ->
             stream.take(1).onValue (it) ->
               initialState[k] = it
@@ -187,6 +209,13 @@ module.exports =
 
         @_receiveState.emit(initialState)
 
+        if @context.wiredStates and wiredState
+          @savedWiredState =
+            signals: wiredState
+            values: initialState
+
+          @context.wiredStates.push @savedWiredState
+
         initialState
 
       componentWillReceiveProps: (nextProps) ->
@@ -198,6 +227,9 @@ module.exports =
         @_alive.end()
         @_receiveProps.end()
         @ctrl.end()
+
+        if @context.wiredStates
+          @context.wiredStates.splice @context.wiredStates.indexOf(@savedWiredState), 1
 
       componentDidMount: ->
         @_blockers?.emit false
@@ -230,4 +262,8 @@ module.exports =
       render: ->
         React.createElement component,
           _.merge {wire: @wire, wiredState: @state, slot: @ctrl.slot}, @props
+
+  combine: (fns...) => (ctrl) =>
+    _.assign (fns.map (it) => it ctrl)...
+
 
