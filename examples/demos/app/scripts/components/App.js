@@ -5,6 +5,7 @@ var board = require('reactive-switchboard');
 var RestDemo = require('./demos/RestDemo');
 var BasicDemo = require('./demos/BasicDemo');
 var Timer = require('./demos/Timer');
+var Stopwatch = require('./demos/Stopwatch');
 var StringTransformer = require('./demos/StringTransformer');
 var FirebaseDemo = require('./demos/FirebaseDemo');
 var MouseTracker = require('./demos/MouseTracker')
@@ -24,6 +25,7 @@ var sources = {
     '/string': fs.readFileSync(__dirname + '/demos/StringTransformer.js', 'utf-8'),
     '/mouse': fs.readFileSync(__dirname + '/demos/MouseTracker.js', 'utf-8'),
     '/timer': fs.readFileSync(__dirname + '/demos/Timer.js', 'utf-8'),
+    '/stopwatch': fs.readFileSync(__dirname + '/demos/Stopwatch.js', 'utf-8'),
     '/rest': fs.readFileSync(__dirname + '/demos/RestDemo.js', 'utf-8'),
     '/firebase': fs.readFileSync(__dirname + '/demos/FirebaseDemo.js', 'utf-8'),
     '/combinators': fs.readFileSync(__dirname + '/demos/Combinators.js', 'utf-8'),
@@ -46,6 +48,9 @@ var demos = [
         <p>Play around with the value of <code>interval</code> and see how the counter reacts.</p>
 
         <p>This is a simple timer component that demonstrates using <code>propsProperty</code> for reacting to changes in component props. Our parent component defines the signal <code>interval</code> that is passed to the child component - the child component then validates the value and uses it to create a new timer that is used to increment the counter.</p>
+    </div>),
+    makeDemo('/stopwatch', 'Stopwatch', <Stopwatch />, <div>
+        <p></p>
     </div>),
     makeDemo('/combinators', 'Combinators', <Combinators />, <div>
         <p>Play around with the value of <code>interval</code> and see how the counter reacts.</p>

@@ -147,7 +147,7 @@ module.exports =
         r.map((it) => r.zip(r.values(it.values), r.values(it.signals)))
         r.unnest()
         r.filter(([value]) => !fn(value))
-        r.map((it) => it[1].skip(1).take(1))
+        r.map((it) => it[1].changes())
       )(signals)
 
     b.validateSignals = (component, validator, cb) =>
@@ -159,7 +159,7 @@ module.exports =
       [wiredStates...].forEach((it) => it.component.end())
 
       if (invalidSignals.length)
-        kefir.zip(invalidSignals).take(1).onValue(() => b.validateSignals(component, validator, cb))
+        kefir.zip(invalidSignals.map((it) => it.filter(validator))).take(1).onValue(() => b.validateSignals(component, validator, cb))
       else
         cb(result)
 
