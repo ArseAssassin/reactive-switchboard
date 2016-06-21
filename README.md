@@ -27,10 +27,8 @@ module.exports = board.component(
                 onClick={wire((it) => it.to(slot('dec')))}>
                 -
             </button>
-            {' '}
             {/* component receives signals as a prop via `wiredState` */}
             {wiredState.value}
-            {' '}
             <button
                 type="button"
                 className="btn btn-success"
