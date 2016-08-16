@@ -32,8 +32,9 @@ kefir.Observable.prototype.holdLatestWhile = (obs) ->
   value = null
   tryFlush = ->
     if !isBlocked and value != null and emitter
-      emitter.emit value
+      valueToEmit = value
       value = null
+      emitter.emit valueToEmit
 
   setIsFree = (it) ->
     isBlocked = it
