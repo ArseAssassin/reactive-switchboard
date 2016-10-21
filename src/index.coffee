@@ -114,6 +114,12 @@ board = create: (fn) ->
     slot: (name) ->
       slots[name] ||= kefir.emitter()
 
+    safeSlot: (componentName) -> (name) ->
+      if !slots[name]
+        throw new Error("Invalid slot used '#{name}' when rendering #{componentName} - slot not defined in wireState")
+
+      slots[name]
+
     consume: (consumers) ->
       for name, fn of consumers
         do (name, fn) ->
@@ -166,12 +172,23 @@ module.exports =
 
     b
 
+  slot:
+    prepend: (fn, slot) ->
+      e = kefir.emitter()
+      slot.onEnd () -> e.end()
+      fn(e).to slot
+
+      e
+
   component: (wireState, component) =>
     if !component
       component = wireState
       wireState = undefined
+
+    componentName = component.displayName || component.name || 'AnonymousSwitchboardComponent'
+
     React.createClass
-      displayName: component.displayName || component.name
+      displayName: componentName
 
       contextTypes:
         switchboard: React.PropTypes.object
@@ -179,10 +196,11 @@ module.exports =
 
       getInitialState: ->
         @_wires = []
+        @wiredState = {}
 
+        @_dirty = false
         @_alive = kefir.emitter()
         @_receiveProps = kefir.emitter()
-        @_receiveState = kefir.emitter()
         @isAlive = @_alive.scan snd, true
         @dead = @isAlive.filter (it) -> it == false
         @_propStream = @_receiveProps
@@ -191,15 +209,9 @@ module.exports =
         @ctrl = board.create()[0]
 
         @ctrl.propsProperty = @_propStream
-        @ctrl.stateProperty = @_receiveState
 
         @ctrl.isAlive = @isAlive
         @ctrl.switchboard = @context.switchboard
-
-        oldSignal = @ctrl.signal
-        @ctrl.signal = (value, reducers...) =>
-          oldSignal(value, reducers...).takeUntilBy @dead
-
 
         streams = []
         initialState = {}
@@ -207,30 +219,27 @@ module.exports =
 
         for k, stream of wiredState
           do (k, stream) ->
-            stream.take(1).onValue (it) ->
-              initialState[k] = it
-
-            streams.push stream.skip(1).map (it) ->
-              [k, it]
+            streams.push stream.map (it) -> [k, it]
 
         if streams.length
-          @_blockers = kefir.emitter()
-          blocked = @_blockers.scan snd, true
-          .skipDuplicates()
-
           @updates = kefir.merge(streams)
             .takeUntilBy @dead
-            .skipDuplicates(r.equals)
             .scan (state, [name, value]) ->
               r.merge state, "#{name}": value
             , {}
-            .skipDuplicates(r.equals)
-            .holdLatestWhile blocked
             .onValue (state) =>
-              @_receiveState.emit(r.merge(this.state, state))
-              @setState state
+              @wiredState = state
 
-        @_receiveState.emit(initialState)
+              if initialStateDone
+                @_dirty = true
+
+                if @_updateState
+                  clearTimeout @_updateState
+
+                @_updateState = setTimeout () =>
+                                  if @_dirty
+                                    @forceUpdate()
+                                , 0
 
         if @context.wiredStates and wiredState
           @savedWiredState =
@@ -240,7 +249,14 @@ module.exports =
 
           @context.wiredStates.push @savedWiredState
 
-        initialState
+        initialStateDone = true
+
+        keys = r.keys @wiredState
+        for k of wiredState or {}
+          if !r.contains k, keys
+            console.warn "wireState for #{componentName} didn't produce an initial value for #{k} - might not be a Kefir property"
+
+        @wiredState
 
       componentWillReceiveProps: (nextProps) ->
         @_receiveProps.emit nextProps
@@ -248,9 +264,11 @@ module.exports =
       componentWillUnmount: ->
         @end()
 
+      componendDidUpdate: ->
+        @_dirty = false
+
       end: ->
         @_alive.emit false
-        @_blockers?.end()
         @_alive.end()
         @_receiveProps.end()
         @ctrl.end()
@@ -260,15 +278,8 @@ module.exports =
           delete @savedWiredState
 
 
-      componentDidMount: ->
-        @_blockers?.emit false
-
       componentWillUpdate: ->
-        @_blockers?.emit true
         @clearWires()
-
-      componentDidUpdate: ->
-        @_blockers?.emit false
 
       wire: (fn) ->
         if !fn
@@ -290,9 +301,10 @@ module.exports =
 
       render: ->
         React.createElement component,
-          r.merge {wire: @wire, wiredState: @state, slot: @ctrl.slot, switchboard: @context.switchboard}, @props
-
-  combine: (fns...) => (ctrl) =>
-    r.merge (fns.map (it) => it ctrl)...
-
+          r.merge {
+            wire:         @wire
+            wiredState:   @wiredState
+            slot:         @ctrl.safeSlot componentName
+            switchboard:  @context.switchboard,
+          }, @props
 
