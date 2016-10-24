@@ -133,7 +133,10 @@ board = create: (fn) ->
 
 
 module.exports =
-  create: (fn) =>
+  create: (fn) ->
+    throw new Error('create() has been deprecated in favor of model (https://github.com/ArseAssassin/reactive-switchboard/issues/11)')
+
+  model: (fn) =>
     b = board.create(fn)[1]
     b.inject = (element, wiredStates) =>
       React.createElement React.createClass
@@ -281,17 +284,21 @@ module.exports =
       componentWillUpdate: ->
         @clearWires()
 
-      wire: (fn) ->
-        if !fn
-          throw new Error "wire takes function as argument, received #{fn?.toString()}"
+      wire: (arg) ->
+        if typeof arg == 'string'
+          invocation = (it) => @ctrl.safeSlot(componentName)(arg).emit it
+        else if arg.emit
+          invocation = arg.emit
+        else if arg.call
+          wire = undefined
+          invocation = (args...) =>
+            if !wire
+              @_wires.push wire = kefir.emitter()
+              wire.wire arg
 
-        wire = undefined
-        invocation = (args...) =>
-          if !wire
-            @_wires.push wire = kefir.emitter()
-            wire.wire fn
-
-          wire.emit args...
+            wire.emit args...
+        else
+          throw new Error("wire received #{arg} as argument - expected function, slot or string")
 
         invocation
 

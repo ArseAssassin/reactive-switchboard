@@ -8,11 +8,9 @@ This is a list of public API methods and properties that reactive-switchboard ex
 
 `wireState` will receive an object as an argument with the following properties:
 
-* ```signal(initialValue, [stream, [fn], ...])``` is used to create a new signal (a mutable value). The first argument is the initial value which will be immediately available. It accepts a variable number of Kefir streams which will be used to update the signal every time they produce a value. If the stream is followed by a function, it will be used to fold the new value into the signal's current value. `fn` has the type signature `(oldValue, newValue) ->` and returns the updated value for the signal. If `fn` is not defined, `newValue` is used as is. Returns a Kefir property.
+* ```signal(initialValue, [stream, [fn], ...])``` is used to create a new signal (a mutable value). The first argument is the initial value which will be immediately available. It accepts a variable number of Kefir streams which will be used to update the signal every time they produce a value. If the stream is followed by a function, it will be used to fold the new value into the signal's current value. `fn` has the type signature `(oldValue, newValue) =>` and returns the updated value for the signal. If `fn` is not defined, `newValue` is used as is. Returns a Kefir property.
 
 * ```slot(name)``` returns a ```slot``` to which values can be pushed and from which they can be pulled. Typically this is used to pull updates from a component to a signal.
-
-* `stateProperty` is a Kefir property of the component's wired state
 
 * `propsProperty` is a Kefir property of the props passed to the component
 
@@ -20,13 +18,13 @@ This is a list of public API methods and properties that reactive-switchboard ex
 
 `component` will receive the following props:
 
-* `wiredState` latest values of every signal returned from `wireState`. If `wireState` is omitted, this will be `undefined`
+* `wiredState` latest values of every signal returned from `wireState`.
 
-* `wire((stream) => ...)` accepts `fn` as an argument. When the returned function is invoked, the value is pushed into `stream`. Used to wire callback values into slots
+* `slot(name)` returns a slot with `name`. Can be used to update signals defined in `wireState`.
 
-* `slot(name)` returns a slot with `name`. Can be used to update signals defined in `wireState`
+* `wire(arg)` takes one argument: a function, a slot or a string. Returns a function. When called with a function, it will be called with a stream that produces a value every time the returned function is called. This stream can then be freely mapped to update local or model state. When called with a slot, the slot will receive a value every time the returned function is called. When called with a string, the slot bound to component will receive a new value every time the returned function is called.
 
-* `switchboard` reference to a switchboard object if one has been injected into this component
+* A possible `switchboard` reference to a switchboard object if one has been injected into this component.
 
 ```javascript
 switchboard.component(
@@ -64,14 +62,14 @@ switchboard.component(
 ```
 
 
-`reactive-switchboard.create(({ slot, signal }) => ...)` is used to construct a new switchboard. Accepts a function as an argument. The function is invoked with an object with the following properties:
+`reactive-switchboard.model(({ slot, signal }) => ...)` is used to construct a new switchboard. Accepts a function as an argument. The function is invoked with an object with the following properties:
 
 ```signal(initialValue, [stream, [fn], ...])``` is used to create a new signal (a mutable value). The first argument is the initial value which will be immediately available. It accepts a variable number of Kefir streams which will be used to update the signal every time they produce a value. If the stream is followed by a function, it will be used to fold the new value into the signal's current value. `fn` has the type signature `(oldValue, newValue) ->` and returns the updated value for the signal. If `fn` is not defined, `newValue` is used as is. Returns a Kefir property.
 
 ```slot(name)``` returns a ```slot``` to which values can be pushed and from which they can be pulled. Typically this is used to pull updates from a component to a signal.
 
 ```javascript
-switchboard.create(({ slot, signal }) => ({
+switchboard.model(({ slot, signal }) => ({
     counter: signal(
         0,
 
@@ -87,7 +85,7 @@ switchboard.create(({ slot, signal }) => ({
 
 `reactive-switchboard` adds some convenience methods to Kefir:
 
-`kefir.Observable.prototype.wire([self], fn)` splits a stream so that it can be directed into multiple slots. Calls `fn` with the stream being split bound to `this`. If `self` is defined, the created stream inherits `state`, `props`, `slot` and `board` properties from it.
+`kefir.Observable.prototype.wire(arg)` splits a stream so that it can be directed into multiple slots. Calls `fn` with the stream being split bound to `this`.
 
 `kefir.Observable.prototype.to(slot, [slot, ...])` when `Observable` produces a value, push it to all slots passed as argument. This needs to be called on `wires` for them to have an effect.
 
