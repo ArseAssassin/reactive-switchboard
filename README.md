@@ -8,7 +8,7 @@ Declarative state handling for React.
 var board = require('reactive-switchboard')
 
 module.exports = board.component(
-    ({ slot, signal, stateProperty }) => ({
+    ({ slot, signal }) => ({
         value: signal(0, // start with 0
 
             slot('inc'), // when the `inc` slot receives a value
