@@ -190,6 +190,9 @@ module.exports =
 
     componentName = component.displayName || component.name || 'AnonymousSwitchboardComponent'
 
+    if component.prototype.shouldComponentUpdate
+      throw new Error("You've defined shouldComponentUpdate for #{componentName} - defining shouldComponentUpdate for a switchboard component can cause unexpected behavior. For more information: https://github.com/ArseAssassin/reactive-switchboard/issues/2")
+
     React.createClass
       displayName: componentName
 
@@ -262,7 +265,11 @@ module.exports =
         @wiredState
 
       componentWillReceiveProps: (nextProps) ->
-        @_receiveProps.emit nextProps
+        try
+          @_receiveProps.emit nextProps
+        catch e
+          console.error "Component #{componentName} threw an error when receiving props"
+          throw e
 
       componentWillUnmount: ->
         @end()
