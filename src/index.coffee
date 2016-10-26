@@ -243,7 +243,7 @@ module.exports =
                   clearTimeout @_updateState
 
                 @_updateState = setTimeout () =>
-                                  if @_dirty
+                                  if @_dirty && @isMounted()
                                     @forceUpdate()
                                 , 0
 
