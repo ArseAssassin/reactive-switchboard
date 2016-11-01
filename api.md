@@ -14,6 +14,8 @@ This is a list of public API methods and properties that reactive-switchboard ex
 
 * `propsProperty` is a Kefir property of the props passed to the component
 
+* `isAlive` property of the component's lifecycle status - true until component unmounts
+
 * `switchboard` reference to a switchboard object if one has been injected into this component
 
 `component` will receive the following props:
