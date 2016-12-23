@@ -4,7 +4,7 @@ React = require 'react'
 
 snd = (a, b) -> b
 
-kefir.emitter = ->
+switchboardSlot = ->
   emitter = null
   stream = kefir.stream (_emitter) ->
     emitter = _emitter
@@ -15,8 +15,16 @@ kefir.emitter = ->
   stream.emitEvent = (x) -> emitter?.emitEvent x; @
   stream.end = (x) -> emitter?.end()
 
-  stream.setName 'emitter'
+  stream.setName 'switchboardSlot'
 
+kefir.emitter = switchboardSlot
+
+switchboardSlot.prepend = (fn, slot) ->
+  e = switchboardSlot()
+  slot.onEnd () -> e.end()
+  fn(e).to slot
+
+  e
 
 kefir.Observable.prototype.doAction = (f) ->
   @map (it) ->
@@ -107,12 +115,15 @@ signal = create: (value, reducers...) ->
 
 board = create: (fn) ->
   slots = {}
+  onEnd = switchboardSlot()
+
   o =
     signal: (value, reducers...) ->
-      signal.create value, reducers...
+      s = signal.create value, reducers...
+      s.takeUntilBy onEnd
 
     slot: (name) ->
-      slots[name] ||= kefir.emitter()
+      slots[name] ||= switchboardSlot()
 
     safeSlot: (componentName) -> (name) ->
       if !slots[name]
@@ -129,6 +140,8 @@ board = create: (fn) ->
       for name, slot of slots
         slot.end()
 
+      onEnd.end()
+
   [o, fn? o]
 
 
@@ -137,7 +150,11 @@ module.exports =
     throw new Error('create() has been deprecated in favor of model (https://github.com/ArseAssassin/reactive-switchboard/issues/11)')
 
   model: (fn) =>
-    b = board.create(fn)[1]
+    [ctrl, b] = board.create(fn)
+
+    if b.endBy
+      b.endBy.take(1).onValue ctrl.end
+
     b.inject = (element, wiredStates) =>
       React.createElement React.createClass
         displayName: 'ReactiveSwitchboardInjector'
@@ -175,18 +192,18 @@ module.exports =
 
     b
 
-  slot:
-    prepend: (fn, slot) ->
-      e = kefir.emitter()
-      slot.onEnd () -> e.end()
-      fn(e).to slot
-
-      e
+  slot: switchboardSlot
 
   component: (wireState, component) =>
     if !component
       component = wireState
       wireState = undefined
+
+    if !component or !component.call
+      throw new Error "Calling switchboard.component with a non-function #{component} - should be called with a render function"
+
+    if component.prototype.render
+      throw new Error "Calling switchboard.component with a React component - should be called with a render function"
 
     componentName = component.displayName || component.name || 'AnonymousSwitchboardComponent'
 
@@ -205,8 +222,8 @@ module.exports =
         @wiredState = {}
 
         @_dirty = false
-        @_alive = kefir.emitter()
-        @_receiveProps = kefir.emitter()
+        @_alive = switchboardSlot()
+        @_receiveProps = switchboardSlot()
         @isAlive = @_alive.scan snd, true
         @dead = @isAlive.filter (it) -> it == false
         @_propStream = @_receiveProps
@@ -215,6 +232,7 @@ module.exports =
         @ctrl = board.create()[0]
 
         @ctrl.propsProperty = @_propStream
+        updateBy = @_propStream
 
         @ctrl.isAlive = @isAlive
         @ctrl.switchboard = @context.switchboard
@@ -224,28 +242,35 @@ module.exports =
         wiredState = wireState?(@ctrl)
 
         for k, stream of wiredState
-          do (k, stream) ->
-            streams.push stream.map (it) -> [k, it]
+          if !stream or !stream.onValue
+            throw new Error("#{componentName}.#{k} is not a stream - returned a non-stream value from wireState: #{String(stream)}")
+
+          if k == 'updateBy'
+            updateBy = stream
+          else
+            do (k, stream) =>
+              try
+                stream
+                .takeUntilBy(@dead)
+                .onError (it) ->
+                  console.error "#{componentName}.#{k} produced an error: #{String(it)}"
+              catch e
+                console.error "Error thrown when listening to #{componentName}.#{k}", e
+                throw e
+
+              streams.push stream.map (it) -> [k, it]
 
         if streams.length
           @updates = kefir.merge(streams)
             .takeUntilBy @dead
             .scan (state, [name, value]) ->
-              r.merge state, "#{name}": value
+              r.assoc name, value, state
             , {}
             .onValue (state) =>
               @wiredState = state
 
               if initialStateDone
-                @_dirty = true
-
-                if @_updateState
-                  clearTimeout @_updateState
-
-                @_updateState = setTimeout () =>
-                                  if @_dirty && @isMounted()
-                                    @forceUpdate()
-                                , 0
+                @updateState()
 
         if @context.wiredStates and wiredState
           @savedWiredState =
@@ -262,7 +287,23 @@ module.exports =
           if !r.contains k, keys
             console.warn "wireState for #{componentName} didn't produce an initial value for #{k} - might not be a Kefir property"
 
+        updateBy.onValue @updateState
+
         @wiredState
+
+      updateState: ->
+        @_dirty = true
+
+        if @_updateState
+          clearTimeout @_updateState
+
+        @_updateState = setTimeout () =>
+                          if @_dirty && @isMounted()
+                            @forceUpdate()
+                        , 0
+
+      shouldComponentUpdate: ->
+        false
 
       componentWillReceiveProps: (nextProps) ->
         try
@@ -300,7 +341,7 @@ module.exports =
           wire = undefined
           invocation = (args...) =>
             if !wire
-              @_wires.push wire = kefir.emitter()
+              @_wires.push wire = switchboardSlot()
               wire.wire arg
 
             wire.emit args...
@@ -314,11 +355,16 @@ module.exports =
           @_wires.pop().end()
 
       render: ->
-        React.createElement component,
-          r.merge {
-            wire:         @wire
-            wiredState:   @wiredState
-            slot:         @ctrl.safeSlot componentName
-            switchboard:  @context.switchboard,
-          }, @props
+        internals = {
+          wire:         @wire
+          wiredState:   @wiredState
+          slot:         @ctrl.safeSlot componentName
+          switchboard:  @context.switchboard,
+        }
+        intersection = r.intersection(r.keys(internals), r.keys(@props))
+
+        if intersection.length > 0
+          console.warn "Switchboard child component #{componentName} received clashing props from parent component: #{intersection.join(', ')}"
+
+        component(r.merge internals, @props)
 
