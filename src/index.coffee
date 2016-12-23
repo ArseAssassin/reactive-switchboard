@@ -207,9 +207,6 @@ module.exports =
 
     componentName = component.displayName || component.name || 'AnonymousSwitchboardComponent'
 
-    if component.prototype.shouldComponentUpdate
-      throw new Error("You've defined shouldComponentUpdate for #{componentName} - defining shouldComponentUpdate for a switchboard component can cause unexpected behavior. For more information: https://github.com/ArseAssassin/reactive-switchboard/issues/2")
-
     React.createClass
       displayName: componentName
 
@@ -224,6 +221,7 @@ module.exports =
         @_dirty = false
         @_alive = switchboardSlot()
         @_receiveProps = switchboardSlot()
+        @_lifecycle = switchboardSlot()
         @isAlive = @_alive.scan snd, true
         @dead = @isAlive.filter (it) -> it == false
         @_propStream = @_receiveProps
@@ -232,6 +230,7 @@ module.exports =
         @ctrl = board.create()[0]
 
         @ctrl.propsProperty = @_propStream
+        @ctrl.lifecycle = @_lifecycle
         updateBy = @_propStream
 
         @ctrl.isAlive = @isAlive
@@ -306,21 +305,31 @@ module.exports =
         false
 
       componentWillReceiveProps: (nextProps) ->
+        @_lifecycle.emit 'componentWillReceiveProps'
         try
           @_receiveProps.emit nextProps
         catch e
           console.error "Component #{componentName} threw an error when receiving props"
           throw e
 
+      componentWillMount: ->
+        @_lifecycle.emit 'componentWillMount'
+
+      componentDidMount: ->
+        @_lifecycle.emit 'componentDidMount'
+
       componentWillUnmount: ->
+        @_lifecycle.emit 'componentWillUnmount'
         @end()
 
       componendDidUpdate: ->
+        @_lifecycle.emit 'componentDidUpdate'
         @_dirty = false
 
       end: ->
         @_alive.emit false
         @_alive.end()
+        @_lifecycle.end()
         @_receiveProps.end()
         @ctrl.end()
 
@@ -330,6 +339,7 @@ module.exports =
 
 
       componentWillUpdate: ->
+        @_lifecycle.emit 'componentDidUpdate'
         @clearWires()
 
       wire: (arg) ->
