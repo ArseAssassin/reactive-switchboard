@@ -6,7 +6,7 @@ function createTodo(label) {
   }
 }
 
-module.exports = require('reactive-switchboard').create(function(ctrl) {
+module.exports = require('reactive-switchboard').model(function(ctrl) {
   var todos = window.localStorage.getItem('todos-reactive-switchboard');
   todos = todos && JSON.parse(todos) || [];
 

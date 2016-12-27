@@ -9,7 +9,7 @@ var dom = React.DOM;
 
 var board = require('reactive-switchboard');
 
-var Board = board.create(ctrl => ({
+var Board = board.model(ctrl => ({
   path: {
     signal: ctrl.signal(
       document.location.pathname,
