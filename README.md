@@ -51,6 +51,8 @@ npm install --save -E reactive-switchboard kefir
 
 * [Tutorial](https://medium.com/@ArseAssassin/creating-a-url-router-with-reactive-switchboard-c327538f4518)
 * [API Documentation](api.md)
+* [Performance documentation](optimization.md)
+* [Ramda.js - my recommended companion to Kefir](http://ramdajs.com/)
 * [Introduction to reactive programming](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754)
 * [Demos](examples/demos/)
 * [TodoMVC](examples/todomvc/)

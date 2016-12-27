@@ -154,6 +154,8 @@ module.exports =
 
     if b.endBy
       b.endBy.take(1).onValue ctrl.end
+    else
+      b.endBy = kefir.never()
 
     b.inject = (element, wiredStates) =>
       React.createElement React.createClass
@@ -283,7 +285,7 @@ module.exports =
 
         keys = r.keys @wiredState
         for k of wiredState or {}
-          if !r.contains k, keys
+          if k != 'updateBy' and !r.contains k, keys
             console.warn "wireState for #{componentName} didn't produce an initial value for #{k} - might not be a Kefir property"
 
         updateBy.onValue @updateState

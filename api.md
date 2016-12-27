@@ -4,7 +4,7 @@ This is a list of public API methods and properties that reactive-switchboard ex
 
 ## ```reactive-switchboard```
 
-`reactive-switchboard.component([wireState,] component)` creates a switchboard-enabled React component. `wireState` is a function that receives a `switchboard` object as an argument and returns an object which will be used to wire the component's state.
+`reactive-switchboard.component([wireState,] fn)` creates a switchboard-enabled React component. `wireState` is a function that receives a `switchboard` object as an argument and returns an object which will be used to wire the component's state. `fn` is the component's render method.
 
 `wireState` will receive an object as an argument with the following properties:
 
@@ -14,7 +14,12 @@ This is a list of public API methods and properties that reactive-switchboard ex
 
 * `propsProperty` is a Kefir property of the props passed to the component
 
+* `lifecycle` emits a string when Switchboard component's lifecycle method is called. Possible values include `componentWillReceiveProps`, `componentWillMount`, `componentDidMount`, `componentWillUnmount` and `componentDidUpdate`
+
 * `switchboard` reference to a switchboard object if one has been injected into this component
+
+* `updateBy: stream` can be returned from `wireState` to prevent component from rerendering every time it receives new props. [Read more on Switchboard optimization](optimization.md)
+
 
 `component` will receive the following props:
 
@@ -61,12 +66,11 @@ switchboard.component(
 )
 ```
 
-
 `reactive-switchboard.model(({ slot, signal }) => ...)` is used to construct a new switchboard. Accepts a function as an argument. The function is invoked with an object with the following properties:
 
-```signal(initialValue, [stream, [fn], ...])``` is used to create a new signal (a mutable value). The first argument is the initial value which will be immediately available. It accepts a variable number of Kefir streams which will be used to update the signal every time they produce a value. If the stream is followed by a function, it will be used to fold the new value into the signal's current value. `fn` has the type signature `(oldValue, newValue) ->` and returns the updated value for the signal. If `fn` is not defined, `newValue` is used as is. Returns a Kefir property.
+* ```signal(initialValue, [stream, [fn], ...])``` is used to create a new signal (a mutable value). The first argument is the initial value which will be immediately available. It accepts a variable number of Kefir streams which will be used to update the signal every time they produce a value. If the stream is followed by a function, it will be used to fold the new value into the signal's current value. `fn` has the type signature `(oldValue, newValue) ->` and returns the updated value for the signal. If `fn` is not defined, `newValue` is used as is. Returns a Kefir property.
 
-```slot(name)``` returns a ```slot``` to which values can be pushed and from which they can be pulled. Typically this is used to pull updates from a component to a signal.
+* ```slot(name)``` returns a ```slot``` to which values can be pushed and from which they can be pulled. Typically this is used to pull updates from a component to a signal.
 
 ```javascript
 switchboard.model(({ slot, signal }) => ({
@@ -79,7 +83,11 @@ switchboard.model(({ slot, signal }) => ({
 }))
 ```
 
-`switchboard.inject(component)` injects the switchboard object into the `component`. Makes `switchboard` available in the component's `wireState` and props.
+* ```endBy: stream``` can be returned from `switchboard.model(fn)` to garbage collect a model. [Read more on Switchboard optimization](optimization.md)
+
+* `switchboard.inject(component)` injects the switchboard object into the `component`. Makes `switchboard` available in the component's `wireState` and props.
+
+`reactive-switchboard.slot()` returns a Kefir stream to which values can be pushed. Call `emit(value)` to push a new value into the stream. Roughly equivalent to Rx.Subject or Bacon.Bus. Can be used to abstract over imperative APIs, such as any callback-based interface.
 
 ## Kefir additions
 
@@ -98,8 +106,6 @@ switchboard.model(({ slot, signal }) => ({
 `kefir.Observable.prototype.not()` inverts produced value.
 
 `kefir.Observable.prototype.rescue(fn)` rescues an emitted error with `fn` and pushes result back into value stream.
-
-`kefir.emitter()` returns a Kefir stream to which values can be pushed. Roughly equivalent to Rx.Subject or Bacon.Bus. Used internally to work with React's imperative API.
 
 ```kefir.Observable.prototype.doAction(fn)``` adds a side-effect to stream without adding an extra observer. Useful for working with imperative APIs.
 
