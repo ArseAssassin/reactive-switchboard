@@ -26,6 +26,12 @@ switchboardSlot.prepend = (fn, slot) ->
 
   e
 
+switchboardSlot.toFn = (slot) ->
+  slot.emit
+
+switchboardSlot.fromFn = (fn) ->
+  { emit: fn }
+
 kefir.Observable.prototype.doAction = (f) ->
   @map (it) ->
     f it
@@ -142,7 +148,12 @@ board = create: (fn) ->
 
       onEnd.end()
 
-  [o, fn? o]
+  if fn
+    result = fn o
+    if !result
+      throw new Error('Returned invalid value form switchboard.create: ' + result.toString())
+
+  [o, result]
 
 
 module.exports =
@@ -324,9 +335,9 @@ module.exports =
         @_lifecycle.emit 'componentWillUnmount'
         @end()
 
-      componendDidUpdate: ->
-        @_lifecycle.emit 'componentDidUpdate'
+      componentDidUpdate: ->
         @_dirty = false
+        @_lifecycle.emit 'componentDidUpdate'
 
       end: ->
         @_alive.emit false
@@ -341,17 +352,21 @@ module.exports =
 
 
       componentWillUpdate: ->
-        @_lifecycle.emit 'componentDidUpdate'
+        @_lifecycle.emit 'componentWillUpdate'
         @clearWires()
 
       wire: (arg) ->
         if typeof arg == 'string'
-          invocation = (it) => @ctrl.safeSlot(componentName)(arg).emit it
+          @namedWires ||= {}
+          if !@namedWires[arg]
+            @namedWires[arg] = (it) => @ctrl.safeSlot(componentName)(arg).emit it
+
+          @namedWires[arg]
         else if arg.emit
-          invocation = arg.emit
+          arg.emit
         else if arg.call
           wire = undefined
-          invocation = (args...) =>
+          (args...) =>
             if !wire
               @_wires.push wire = switchboardSlot()
               wire.wire arg
@@ -359,8 +374,6 @@ module.exports =
             wire.emit args...
         else
           throw new Error("wire received #{arg} as argument - expected function, slot or string")
-
-        invocation
 
       clearWires: ->
         while @_wires.length
