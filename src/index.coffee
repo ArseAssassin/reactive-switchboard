@@ -336,7 +336,6 @@ module.exports =
         @end()
 
       componentDidUpdate: ->
-        @_dirty = false
         @_lifecycle.emit 'componentDidUpdate'
 
       end: ->
@@ -390,6 +389,8 @@ module.exports =
 
         if intersection.length > 0
           console.warn "Switchboard child component #{componentName} received clashing props from parent component: #{intersection.join(', ')}"
+
+        @_dirty = false
 
         component(r.merge internals, @props)
 
