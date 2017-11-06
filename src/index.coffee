@@ -1,6 +1,8 @@
 kefir = require 'kefir'
 r = require 'ramda'
 React = require 'react'
+createClass = require 'create-react-class'
+propTypes = require 'prop-types'
 
 snd = (a, b) -> b
 
@@ -169,12 +171,12 @@ module.exports =
       b.endBy = kefir.never()
 
     b.inject = (element, wiredStates) =>
-      React.createElement React.createClass
+      React.createElement createClass
         displayName: 'ReactiveSwitchboardInjector'
 
         childContextTypes:
-          switchboard: React.PropTypes.object
-          wiredStates: React.PropTypes.array
+          switchboard: propTypes.object
+          wiredStates: propTypes.array
 
         getChildContext: () =>
           switchboard: b
@@ -220,12 +222,12 @@ module.exports =
 
     componentName = component.displayName || component.name || 'AnonymousSwitchboardComponent'
 
-    React.createClass
+    createClass
       displayName: componentName
 
       contextTypes:
-        switchboard: React.PropTypes.object
-        wiredStates: React.PropTypes.array
+        switchboard: propTypes.object
+        wiredStates: propTypes.array
 
       getInitialState: ->
         @_wires = []
@@ -310,7 +312,7 @@ module.exports =
           clearTimeout @_updateState
 
         @_updateState = setTimeout () =>
-                          if @_dirty && @isMounted()
+                          if @_dirty && @_isMounted
                             @forceUpdate()
                         , 0
 
@@ -329,9 +331,11 @@ module.exports =
         @_lifecycle.emit 'componentWillMount'
 
       componentDidMount: ->
+        @_isMounted = true
         @_lifecycle.emit 'componentDidMount'
 
       componentWillUnmount: ->
+        @_isMounted = false
         @_lifecycle.emit 'componentWillUnmount'
         @end()
 

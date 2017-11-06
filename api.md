@@ -16,6 +16,8 @@ This is a list of public API methods and properties that reactive-switchboard ex
 
 * `lifecycle` emits a string when Switchboard component's lifecycle method is called. Possible values include `componentWillReceiveProps`, `componentWillMount`, `componentDidMount`, `componentWillUnmount` and `componentDidUpdate`
 
+* `isAlive` property of the component's lifecycle status - true until component unmounts
+
 * `switchboard` reference to a switchboard object if one has been injected into this component
 
 * `updateBy: stream` can be returned from `wireState` to prevent component from rerendering every time it receives new props. [Read more on Switchboard optimization](optimization.md)

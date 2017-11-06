@@ -10,11 +10,16 @@
   "author": "Tuomas Kanerva",
   "license": "MIT",
   "peerDependencies": {
-    "kefir": "^3.1.0",
+    "kefir": ">=3.1.0",
     "react": ">=0.13.0",
     "react-dom": ">=0.13.2"
   },
   "dependencies": {
+    "create-react-class": "^15.6.2",
+    "prop-types": "^15.6.0"
+  },
+  "devDependencies": {
+    "kefir": ">=3.1.0",
     "ramda": "0.21.0"
   },
   "repository": {
