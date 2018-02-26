@@ -120,6 +120,21 @@ signal = create: (value, reducers...) ->
     value = newValue
   .toProperty()
 
+timers = []
+executeTimedFunctions = () ->
+  if timers.length
+    currentTimers = timers
+    timers = []
+
+    for fn in currentTimers
+      fn()
+
+  if window.requestAnimationFrame
+    window.requestAnimationFrame executeTimedFunctions
+  else
+    setTimeout executeTimedFunctions, 1000 / 60
+
+executeTimedFunctions()
 
 board = create: (fn) ->
   slots = {}
@@ -233,7 +248,6 @@ module.exports =
         @_wires = []
         @wiredState = {}
 
-        @_dirty = false
         @_alive = switchboardSlot()
         @_receiveProps = switchboardSlot()
         @_lifecycle = switchboardSlot()
@@ -305,16 +319,15 @@ module.exports =
 
         @wiredState
 
+      _doUpdate: ->
+        @_updateState = undefined
+
+        if @_isMounted
+          @forceUpdate()
+
       updateState: ->
-        @_dirty = true
-
-        if @_updateState
-          clearTimeout @_updateState
-
-        @_updateState = setTimeout () =>
-                          if @_dirty && @_isMounted
-                            @forceUpdate()
-                        , 0
+        if !@_updateState
+          @_updateState = timers.push @_doUpdate
 
       shouldComponentUpdate: ->
         false
@@ -393,8 +406,6 @@ module.exports =
 
         if intersection.length > 0
           console.warn "Switchboard child component #{componentName} received clashing props from parent component: #{intersection.join(', ')}"
-
-        @_dirty = false
 
         component(r.merge internals, @props)
 
